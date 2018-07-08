@@ -62,8 +62,20 @@ Cube::Cube()
 	m_pViewCB = NULL;
 	m_pProjCB = NULL;
 	m_pWorldCB = NULL;
-}
 
+	m_rotationX = 0.0f;
+	m_rotationY = 0.5f;
+	m_rotationZ = 0.0f;
+
+	m_translationX = 0.0f;
+	m_translationY = 0.0f;
+	m_translationZ = 4.0f;
+
+	m_scaleX = 0.3f;
+	m_scaleY = 0.3f;
+	m_scaleZ = 0.3f;
+
+}
 
 Cube::~Cube()
 {
@@ -77,7 +89,7 @@ bool Cube::LoadContent()
 	SetInputLayout(v_shader);
 	SetPixelShader("cube_shader.fx");
 	SetIndexBuffer(v_buffer);
-	LoadTexture((LPCWSTR)"borg.dds");
+	//LoadTexture((LPCWSTR)"borg.dds");
 	SetConstBuffer();
 	InitMatrixes();
 
@@ -96,10 +108,25 @@ void Cube::UnloadContent()
 	m_pViewCB = NULL;
 	m_pProjCB = NULL;
 	m_pWorldCB = NULL;
+
+
 }
 
 void Cube::Update()
 {
+	// Position cube in the world
+	
+	/*m_rotation = XMMatrixRotationRollPitchYaw(m_rotationX, m_rotationY, m_rotationZ);
+	m_translation = XMMatrixTranslation(m_translationX, m_translationY, m_translationZ);
+	XMMATRIX w_pos = XMMatrixTranspose(XMMatrixTranspose(m_rotation * m_translation));*/
+
+	//XMMATRIX r = XMMatrixRotationRollPitchYaw(m_rotationX, m_rotationY, m_rotationZ);
+	/*float y = 0.00004f;
+	float x = 0.00004f;*/
+	
+	Scale(0.3f, 0.4f, 0.5f);
+
+	//Rotate(x, y, 0.0f);
 }
 
 void Cube::Render()
@@ -112,7 +139,6 @@ void Cube::Render()
 	float color[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
 	m_pD3DContext->ClearRenderTargetView(m_pD3DRenderTargetView, color);
 	m_pD3DContext->ClearDepthStencilView(m_pDepthStencilView, D3D11_CLEAR_DEPTH, 1.0f, 0);
-
 
 	// Stride and offset
 	UINT stride = sizeof(Vertex);
@@ -130,26 +156,30 @@ void Cube::Render()
 	m_pD3DContext->PSSetShaderResources(0, 1, &m_pColorMap);
 	m_pD3DContext->PSSetSamplers(0, 1, &m_pColorMapSampler);
 
-	// Position cube in the world
-	XMMATRIX r = XMMatrixRotationRollPitchYaw(0.0f, 0.3f, 0.0f);
-	XMMATRIX t = XMMatrixTranslation(0.0f, 0.0f, 4.0f);
-	XMMATRIX w = XMMatrixTranspose(r * t);
-
-	// Update constant buffers
-	m_pD3DContext->UpdateSubresource(m_pWorldCB, 0, 0, &w, 0, 0);
-	m_pD3DContext->UpdateSubresource(m_pViewCB, 0, 0, &m_viewMatrix, 0, 0);
-	m_pD3DContext->UpdateSubresource(m_pProjCB, 0, 0, &m_projMatrix, 0, 0);
-
-	// Upload constant buffers to GPU
-	m_pD3DContext->VSSetConstantBuffers(0, 1, &m_pWorldCB);
-	m_pD3DContext->VSSetConstantBuffers(1, 1, &m_pViewCB);
-	m_pD3DContext->VSSetConstantBuffers(2, 1, &m_pProjCB);
-
+	
 	// Draw triangles
 	m_pD3DContext->DrawIndexed(36, 0, 0);
 
 	// Present back buffer to display
 	m_pSwapChain->Present(0, 0);
+}
+
+void Cube::Rotate(float X, float Y, float Z)
+{
+	m_rotationX += X;
+	m_rotationY += Y;
+	m_rotationZ += Z;
+
+	UpdateConstBuffer(GetWorldPosition());
+}
+
+void Cube::Scale(float X, float Y, float Z)
+{
+	m_scaleX = X;
+	m_scaleY = Y;
+	m_scaleZ = Z;
+
+	UpdateConstBuffer(GetWorldPosition());
 }
 
 ID3DBlob* Cube::SetVertexShader(LPCSTR FilePath)
@@ -333,4 +363,25 @@ bool Cube::InitMatrixes()
 	m_projMatrix = XMMatrixTranspose(m_projMatrix);
 
 	return true;
+}
+
+void Cube::UpdateConstBuffer(XMMATRIX w_pos)
+{
+	// Update constant buffers
+	m_pD3DContext->UpdateSubresource(m_pWorldCB, 0, 0, &w_pos, 0, 0);
+	m_pD3DContext->UpdateSubresource(m_pViewCB, 0, 0, &m_viewMatrix, 0, 0);
+	m_pD3DContext->UpdateSubresource(m_pProjCB, 0, 0, &m_projMatrix, 0, 0);
+
+	// Upload constant buffers to GPU
+	m_pD3DContext->VSSetConstantBuffers(0, 1, &m_pWorldCB);
+	m_pD3DContext->VSSetConstantBuffers(1, 1, &m_pViewCB);
+	m_pD3DContext->VSSetConstantBuffers(2, 1, &m_pProjCB);
+}
+
+XMMATRIX Cube::GetWorldPosition()
+{
+	XMMATRIX r = XMMatrixRotationRollPitchYaw(m_rotationX, m_rotationY, m_rotationZ);
+	XMMATRIX t = XMMatrixTranslation(m_translationX, m_translationY, m_translationZ);
+	XMMATRIX s = XMMatrixScaling(m_scaleX, m_scaleY, m_scaleZ);
+	return XMMatrixTranspose(r * t * s);
 }

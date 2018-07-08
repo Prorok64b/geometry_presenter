@@ -1,7 +1,6 @@
 Texture2D colorMap : register(t0);
 SamplerState colorSampler : register(s0);
 
-
 cbuffer cbChangesEveryFrame : register(b0)
 {
 	matrix worldMatrix;
@@ -17,20 +16,17 @@ cbuffer cbChangeOnResize : register(b2)
 	matrix projMatrix;
 };
 
-
 struct VS_Input
 {
 	float4 pos  : POSITION;
 	float2 tex0 : TEXCOORD0;
 };
 
-
 struct PS_Input
 {
 	float4 pos  : SV_POSITION;
 	float2 tex0 : TEXCOORD0;
 };
-
 
 PS_Input VS_Main(VS_Input vertex)
 {
@@ -39,13 +35,11 @@ PS_Input VS_Main(VS_Input vertex)
 	vsOut.pos = mul(vertex.pos, worldMatrix);
 	vsOut.pos = mul(vsOut.pos, viewMatrix);
 	vsOut.pos = mul(vsOut.pos, projMatrix);
-	vsOut.tex0 = vertex.tex0;
 
 	return vsOut;
 }
 
-
 float4 PS_Main(PS_Input frag) : SV_TARGET
 {
-	return colorMap.Sample(colorSampler, frag.tex0);
+	return float4(1.0f, 1.0f, 0.0f, 1.0f);
 }

@@ -15,7 +15,8 @@ public:
 
 	virtual void Update();
 	virtual void Render();
-	/*virtual void Rotate();*/
+	virtual void Rotate(float X, float Y, float Z);
+	virtual void Scale(float X, float Y, float Z);
 
 private:
 	virtual ID3DBlob* SetVertexShader(LPCSTR FilePath);
@@ -27,6 +28,8 @@ private:
 	virtual bool SetConstBuffer();
 	virtual bool InitMatrixes();
 
+	virtual void UpdateConstBuffer(XMMATRIX w_pos);
+	virtual XMMATRIX GetWorldPosition();
 
 // Members
 protected:
@@ -43,5 +46,20 @@ protected:
 	XMMATRIX m_viewMatrix;
 	XMMATRIX m_projMatrix;
 
+	float m_rotationX;
+	float m_rotationY;
+	float m_rotationZ;
+
+	float m_translationX;
+	float m_translationY;
+	float m_translationZ;
+
+	float m_scaleX;
+	float m_scaleY;
+	float m_scaleZ;
+
+	XMMATRIX m_rotation;
+	XMMATRIX m_translation;
+	XMMATRIX m_scale;
 };
 
